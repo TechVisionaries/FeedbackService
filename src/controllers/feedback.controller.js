@@ -11,7 +11,7 @@ export const addFeedback = async (req, res) => {
     const { doctorId, rating, comment } = req.body;
     const feedback = new Feedback({
       doctorId,
-      patientId: req.user.id,
+      patientId: req.user.sub,
       rating,
       comment,
     });
@@ -45,7 +45,7 @@ export const deleteFeedback = async (req, res) => {
     if (!feedback) return res.status(404).json({ error: "Feedback not found" });
 
     // Only the patient who wrote it or an admin can delete
-    if (feedback.patientId !== req.user.id && req.user.role !== "admin") {
+    if (feedback.patientId !== req.user.sub && req.user.role !== "admin") {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
