@@ -15,17 +15,17 @@ jobs:
       - name: Build Docker image
         run: docker build -t feedback-service:latest .
 
-      - name: Log in to Docker Hub
-        if: github.ref == 'refs/heads/main'
-        # run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u huntrix007 --password-stdin
-        run: echo "${{ secrets.ECR_TOKEN }}" | docker login --username AWS --password-stdin 575108922870.dkr.ecr.us-east-1.amazonaws.com
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-      # - name: Push to Docker Hub
-      #   if: github.ref == 'refs/heads/main'
-      #   run: |
-      #     docker tag huntrix007/feedback-service huntrix007/feedback-service:${{ github.sha }}
-      #     docker push huntrix007/feedback-service:${{ github.sha }}
-      #     docker push huntrix007/feedback-service:latest
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
       - name: Push to AWS ECR
         if: github.ref == 'refs/heads/main'
         run: |
@@ -34,31 +34,17 @@ jobs:
           docker push $IMAGE_URI
           echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      # - name: Fill in the new task definition
-      #   run: |
-      #     sed "s|<IMAGE_URI>|$IMAGE_URI|g" ecs-task-def.json > task-def.json
-
-      # - name: Register ECS task definition
-      #   id: task-def
-      #   run: |
-      #     TASK_DEF_ARN=$(aws ecs register-task-definition \
-      #       --cli-input-json file://task-def.json \
-      #       --query 'taskDefinition.taskDefinitionArn' \
-      #       --output text \
-      #       --region us-east-1)
-      #     echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+      - name: Debug Image URI
+        run: echo "Image URI to deploy: $IMAGE_URI"
 
       - name: Deploy ECS service
+        if: github.ref == 'refs/heads/main'
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ecs-task-def.json
+          container-image-updates: |
+            container-name="feedback-service"
+            image="$IMAGE_URI"
           service: feedback-service
           cluster: MediSyncCluster
           wait-for-service-stability: true
