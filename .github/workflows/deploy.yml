@@ -1,35 +1,59 @@
-name: Deploy FeedbackService to DockerHub and Analyze with SonarCloud
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
-  build-and-scan:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📦 Checkout code
+      - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: 🛠 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: 🔐 Log in to DockerHub
-        uses: docker/login-action@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-      - name: 🐳 Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: avishkanuwan73/feedback-service:latest
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
-      - name: 🔎 SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
+      - name: Build Docker image
+        run: docker build -t feedback-service:latest .
+
+      - name: Tag and Push Docker image to ECR
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          ECR_REGISTRY: 575108922870.dkr.ecr.us-east-1.amazonaws.com
+          ECR_REPOSITORY: feedback-service
+        run: |
+          IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker tag feedback-service:latest $IMAGE_URI
+          docker push $IMAGE_URI
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+
+      - name: Fill in the task definition with new image
+        run: |
+          sed "s|<IMAGE_URI>|${{ env.IMAGE_URI }}|g" ecs-task-def.json > task-def.json
+
+      - name: Register new ECS task definition
+        id: register-task
+        run: |
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://task-def.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          cluster: MediSyncCluster
+          service: feedback-service
+          task-definition: ${{ env.TASK_DEF_ARN }}
+          wait-for-service-stability: true
