@@ -2,8 +2,6 @@ import jwt from "jsonwebtoken";
 import base64url from "base64url";
 
 const authMiddleware = (req, res, next) => {
-  next();
-  return;
   try {
     // Token extraction from cookie, Authorization header or query parameter
     const token =
