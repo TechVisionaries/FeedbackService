@@ -1,12 +1,16 @@
 {
+  "family": "feedback-service-task",
+  "networkMode": "awsvpc",
+  "executionRoleArn": "arn:aws:iam::575108922870:role/ecsTaskExecutionRole",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "3072",
   "containerDefinitions": [
     {
       "name": "feedback-service",
       "image": "575108922870.dkr.ecr.us-east-1.amazonaws.com/feedback-service:latest",
-      "cpu": 0,
       "portMappings": [
         {
-          "name": "5000-feedback",
           "containerPort": 5000,
           "hostPort": 5000,
           "protocol": "tcp",
@@ -28,33 +32,15 @@
           "value": "mongodb+srv://avishkanuwan73:12345Avishka@cluster0.ijwojwx.mongodb.net/medisync"
         }
       ],
-      "environmentFiles": [],
-      "mountPoints": [],
-      "volumesFrom": [],
-      "ulimits": [],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/feedback-service-task",
-          "mode": "non-blocking",
           "awslogs-create-group": "true",
-          "max-buffer-size": "25m",
           "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "ecs"
-        },
-        "secretOptions": []
-      },
-      "systemControls": []
+        }
+      }
     }
-  ],
-  "family": "feedback-service-task",
-  "executionRoleArn": "arn:aws:iam::575108922870:role/ecsTaskExecutionRole",
-  "networkMode": "awsvpc",
-  "requiresCompatibilities": ["FARGATE"],
-  "cpu": "1024",
-  "memory": "3072",
-  "runtimePlatform": {
-    "cpuArchitecture": "X86_64",
-    "operatingSystemFamily": "LINUX"
-  }
+  ]
 }
