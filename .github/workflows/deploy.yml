@@ -32,7 +32,7 @@ jobs:
           IMAGE_URI=575108922870.dkr.ecr.us-east-1.amazonaws.com/feedback-service:latest
           docker tag feedback-service:latest $IMAGE_URI
           docker push $IMAGE_URI
-          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV 
 
       - name: Debug Image URI
         run: echo "Image URI to deploy: $IMAGE_URI"
