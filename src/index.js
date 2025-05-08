@@ -19,6 +19,7 @@ app.get("/health", (req, res) => {
 
 app.use("/api/feedbacks", feedbackRoutes);
 
+// Connect to MongoDB
 connectDB();
 
 const PORT = process.env.PORT || 5000;
