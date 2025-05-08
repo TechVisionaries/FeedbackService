@@ -1,16 +1,13 @@
 {
   "family": "feedback-service-task",
-  "networkMode": "awsvpc",
-  "executionRoleArn": "arn:aws:iam::575108922870:role/ecsTaskExecutionRole",
-  "requiresCompatibilities": ["FARGATE"],
-  "cpu": "1024",
-  "memory": "3072",
   "containerDefinitions": [
     {
       "name": "feedback-service",
       "image": "575108922870.dkr.ecr.us-east-1.amazonaws.com/feedback-service:latest",
+      "cpu": 0,
       "portMappings": [
         {
+          "name": "5000-tcp-feedback",
           "containerPort": 5000,
           "hostPort": 5000,
           "protocol": "tcp",
@@ -24,23 +21,42 @@
           "value": "5000"
         },
         {
-          "name": "JWT_SECRET",
-          "value": "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437"
+          "name": "MONGO_URI",
+          "value": "mongodb+srv://it21219320:Ja0QFW6NGaNdGdAm@medisync.2tgw8b5.mongodb.net/?retryWrites=true&w=majority&appName=MediSync"
         },
         {
-          "name": "MONGO_URI",
-          "value": "mongodb+srv://avishkanuwan73:12345Avishka@cluster0.ijwojwx.mongodb.net/medisync"
+          "name": "JWT_SECRET",
+          "value": "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437"
         }
       ],
+      "environmentFiles": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "ulimits": [],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/feedback-service-task",
+          "mode": "non-blocking",
           "awslogs-create-group": "true",
+          "max-buffer-size": "25m",
           "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "ecs"
-        }
-      }
+        },
+        "secretOptions": []
+      },
+      "systemControls": []
     }
-  ]
+  ],
+  "executionRoleArn": "arn:aws:iam::575108922870:role/ecsTaskExecutionRole",
+  "networkMode": "awsvpc",
+  "volumes": [],
+  "placementConstraints": [],
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  }
 }
